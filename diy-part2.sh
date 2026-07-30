@@ -13,6 +13,28 @@
 # Modify default IP
 sed -i 's/192.168.1.1/192.168.88.1/g' package/base-files/files/bin/config_generate
 
+# Modify to resolve Netfilter conflict
+FILE="package/kernel/linux/modules/netfilter.mk"
+
+# 删除 KernelPackage/iptables 区块中的 FILES 三行
+sed -i.bak \
+  '/^define KernelPackage\/iptables$/,/^endef$/ {
+    /^[[:space:]]*FILES:=[[:space:]]*\\$/ {
+      N
+      N
+      /ip_tables\.ko.*\\\n.*x_tables\.ko/d
+    }
+  }' "$FILE"
+
+# 将对应 AUTOLOAD 行替换为空定义
+sed -i \
+  '/^define KernelPackage\/iptables$/,/^endef$/ {
+    /^[[:space:]]*AUTOLOAD:=.*ip_tables x_tables/ c\
+  FILES:=\
+  AUTOLOAD:=
+  }' "$FILE"
+
+
 # Modify ustream-ssl
 # echo 'start modify ustream-ssl Makefile'
 # sed -i 's/e251189ed315f22ab63dc6f17b03178676e10c21fff0cdd863b294a3c51a1b5b/c48331dcfda73d16cb12a0aa069eb62a5c370428c7559011a7284a9ef67d3089/g' package/libs/ustream-ssl/Makefile
